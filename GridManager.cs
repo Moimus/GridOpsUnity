@@ -12,6 +12,7 @@ public class GridManager : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         grid = generateGrid(xSize, ySize);
+        linkPoints();
 	}
 	
 	// Update is called once per frame
@@ -24,12 +25,12 @@ public class GridManager : MonoBehaviour {
         List<GameObject> field = new List<GameObject>();
         for (int xn = 0; xn < xSize; xn++)
         {
-            GameObject pointX = Instantiate(pointCollection[Random.Range(0, 2)]);
+            GameObject pointX = Instantiate(pointCollection[Random.Range(0, pointCollection.Length)]);
             pointX.GetComponent<Point>().create(xn , 0);
             field.Add(pointX);
-            for (int yn = 0; yn < ySize; yn++)
+            for (int yn = 1; yn < ySize; yn++)
             {
-                GameObject pointY = Instantiate(pointCollection[Random.Range(0, 2)]);
+                GameObject pointY = Instantiate(pointCollection[Random.Range(0, pointCollection.Length)]);
                 pointY.GetComponent<Point>().create(xn, yn);
                 field.Add(pointY);
             }
@@ -74,6 +75,60 @@ public class GridManager : MonoBehaviour {
         return neighbours;
     }
 
+    public Point getAStar(Point pos, Point dest)
+    {
+        Point path = null;
+        try
+        {
+            //KeyValuePair: Distance Point -> Link, nextPoint
+            List<KeyValuePair<float, Point>> openList = new List<KeyValuePair<float, Point>>();
+            for (int n = 0; n < pos.linkedPoints.Length; n++)
+            {
+                if (pos.linkedPoints[n] != null)
+                {
+                    float localDistance = Vector3.Distance(pos.gameObject.transform.position, pos.linkedPoints[n].gameObject.transform.position);
+                    float targetDistance = Vector3.Distance(pos.linkedPoints[n].gameObject.transform.position, dest.gameObject.transform.position);
+                    float heuristicDistance = localDistance + targetDistance;
+                    KeyValuePair<float, Point> instance = new KeyValuePair<float, Point>(heuristicDistance, pos.linkedPoints[n].GetComponent<Point>());
+                    openList.Add(instance);
+                }
+            }
+            openList.Sort((x, y) => x.Key.CompareTo(y.Key));
+            path = openList[0].Value;
+            Debug.Log("ASTARPOINT:" + path.ToString());
+        }
+        catch(System.Exception e)
+        {
+            Debug.Log(e.StackTrace);
+        }
+
+
+        return path;
+    }
+
+    public void linkPoints()
+    {
+        for(int n = 0; n < grid.Length; n++)
+        {
+            Point nthPoint = grid[n].GetComponent<Point>();
+            if (nthPoint.passable)
+            {
+                Point[] allNeighbours = getNeighbourPoints(nthPoint.x, nthPoint.y);
+                for(int i = 0; i < allNeighbours.Length; i ++)
+                {
+                    if(allNeighbours[i] != null && allNeighbours[i].passable)
+                    {
+                        nthPoint.linkedPoints[i] = allNeighbours[i].gameObject;
+                    }
+                    else if (allNeighbours[i] != null)
+                    {
+                        nthPoint.linkedPoints[i] = null;
+                    }
+                }
+            }
+        }
+    }
+
     public void debugGetPoint()
     {
         Debug.Log(getPointByPosition(2, 4).ToString());
@@ -84,6 +139,7 @@ public class GridManager : MonoBehaviour {
             try
             {
                 Debug.Log(neighbours[n].gameObject.ToString());
+                linkPoints();
             }
             catch
             {

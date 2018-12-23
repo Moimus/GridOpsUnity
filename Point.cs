@@ -7,6 +7,7 @@ public abstract class Point : MonoBehaviour
     public bool passable = true;
     public int x = 0;
     public int y = 0;
+    public GameObject[] linkedPoints = new GameObject[8];
 
 
 	// Use this for initialization
@@ -26,6 +27,12 @@ public abstract class Point : MonoBehaviour
         this.y = y;
         Vector3 pos = new Vector3(x, 0, y);
         gameObject.transform.position = pos;
+    }
+
+    public void OnMouseDown()
+    {
+        Debug.Log("Click!");
+        Destroy(gameObject);
     }
 
     public override string ToString()
